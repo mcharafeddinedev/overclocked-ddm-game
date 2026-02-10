@@ -3,7 +3,7 @@
 An endless runner built in Unreal Engine 5.7 for arcade cabinet hardware. The player is an electric impulse racing through neon tunnels inside a computer system, dodging obstacles and collecting data packets for points.
 
 **Project:** OVERCLOCKED_DDM_Game  
-**Engine:** Unreal Engine 5.7
+**Engine:** Unreal Engine 5.7 (C++)
 
 ---
 
@@ -54,15 +54,6 @@ Keyboard/gamepad only (no mouse)—designed for arcade hardware.
 - **Config/** — Default engine, game, and input config.
 
 Core systems are in C++ with Blueprint wrappers for editor tuning.
-
----
-
-## Getting Started
-
-1. Clone this repository.
-2. Open **`OVERCLOCKED_DDM_Game.uproject`** in Unreal Editor 5.7.
-3. Allow the project to compile (or build the solution in Visual Studio).
-4. Play in-editor or package for Windows.
 
 ---
 
