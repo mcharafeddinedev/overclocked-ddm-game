@@ -529,13 +529,11 @@ void USettingsMenuWidget::LoadSettings()
 		if (!bSettingsInitialized)
 		{
 			// First-time user: Apply shipped package defaults
-			// Quality: Medium (index 1)
-			// Resolution: 1920x1080 (index 2 in AvailableResolutions)
-			// Fullscreen: Windowed (index 2)
-			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: First-time user detected - applying default settings"));
+			// LOW-END BRANCH: Quality: Low (index 0), Resolution: 1280x720, Windowed
+			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: First-time user detected - applying default settings (LOW-END)"));
 			
-			CurrentQualityPresetIndex = 1;  // Medium
-			CurrentResolutionIndex = 2;     // 1920x1080
+			CurrentQualityPresetIndex = 0;  // Low (for old hardware compatibility)
+			CurrentResolutionIndex = 0;     // 1280x720 (index 0 in AvailableResolutions)
 			CurrentFullscreenIndex = 2;     // Windowed
 			
 			// Apply these defaults
@@ -552,7 +550,7 @@ void USettingsMenuWidget::LoadSettings()
 			GConfig->SetBool(*GraphicsConfigSection, *SettingsInitializedKey, true, GGameUserSettingsIni);
 			GConfig->Flush(false, GGameUserSettingsIni);
 			
-			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: Default settings applied - Quality: Medium, Resolution: 1920x1080, Windowed"));
+			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: Default settings applied - Quality: Low, Resolution: 1280x720, Windowed (LOW-END)"));
 		}
 		else
 		{

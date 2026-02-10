@@ -258,7 +258,7 @@ void UAudioSettingsSubsystem::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 	}
 
 	// First-time user: apply default graphics so the window starts at shipped defaults
-	// (1920x1080, Medium, Windowed) before the user ever opens the Settings menu
+	// LOW-END BRANCH: 1280x720, Low quality, Windowed (for GTX 700 series and similar)
 	bool bSettingsInitialized = false;
 	GConfig->GetBool(*GraphicsConfigSection, *SettingsInitializedKey, bSettingsInitialized, GGameUserSettingsIni);
 	if (!bSettingsInitialized && GEngine)
@@ -266,18 +266,18 @@ void UAudioSettingsSubsystem::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 		UGameUserSettings* Settings = GEngine->GetGameUserSettings();
 		if (Settings)
 		{
-			Settings->SetOverallScalabilityLevel(1);  // Medium
-			Settings->SetScreenResolution(FIntPoint(1920, 1080));
+			Settings->SetOverallScalabilityLevel(0);  // Low (for old hardware)
+			Settings->SetScreenResolution(FIntPoint(1280, 720));
 			Settings->SetFullscreenMode(EWindowMode::Windowed);
 			if (GEngine->GameViewport)
 			{
-				GEngine->Exec(LoadedWorld, TEXT("r.SetRes 1920x1080w"));
+				GEngine->Exec(LoadedWorld, TEXT("r.SetRes 1280x720w"));
 			}
 			Settings->ApplySettings(false);
 			Settings->SaveSettings();
 			GConfig->SetBool(*GraphicsConfigSection, *SettingsInitializedKey, true, GGameUserSettingsIni);
 			GConfig->Flush(false, GGameUserSettingsIni);
-			UE_LOG(LogStateRunner_Arcade, Log, TEXT("AudioSettingsSubsystem: First-time defaults applied - 1920x1080, Medium, Windowed"));
+			UE_LOG(LogStateRunner_Arcade, Log, TEXT("AudioSettingsSubsystem: First-time defaults applied - 1280x720, Low, Windowed (LOW-END)"));
 		}
 	}
 

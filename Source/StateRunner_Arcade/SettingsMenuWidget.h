@@ -225,11 +225,11 @@ protected:
 
 	/** Current graphics quality preset index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	int32 CurrentQualityPresetIndex = 1; // Medium (shipped default)
+	int32 CurrentQualityPresetIndex = 0; // Low (LOW-END branch default)
 
 	/** Current resolution index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	int32 CurrentResolutionIndex = 2; // 1920x1080 (shipped default)
+	int32 CurrentResolutionIndex = 0; // 1280x720 (LOW-END branch default)
 
 	/** Current fullscreen mode index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
