@@ -225,15 +225,15 @@ protected:
 
 	/** Current graphics quality preset index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	int32 CurrentQualityPresetIndex = 3; // Epic by default
+	int32 CurrentQualityPresetIndex = 1; // Medium (shipped default)
 
 	/** Current resolution index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	int32 CurrentResolutionIndex = 1; // 1080p by default
+	int32 CurrentResolutionIndex = 2; // 1920x1080 (shipped default)
 
 	/** Current fullscreen mode index */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	int32 CurrentFullscreenIndex = 0; // Fullscreen by default
+	int32 CurrentFullscreenIndex = 2; // Windowed (shipped default)
 
 	/** Available resolutions */
 	UPROPERTY(BlueprintReadOnly, Category="State")

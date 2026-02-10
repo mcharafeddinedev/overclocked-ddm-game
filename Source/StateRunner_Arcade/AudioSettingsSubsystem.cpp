@@ -5,7 +5,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "GameFramework/GameUserSettings.h"
 #include "StateRunner_Arcade.h"
+
+// Graphics first-time defaults (must match SettingsMenuWidget)
+static const FString GraphicsConfigSection = TEXT("/Script/StateRunner_Arcade.GraphicsSettings");
+static const FString SettingsInitializedKey = TEXT("bSettingsInitialized");
 
 // --- Static Config Keys (must match SettingsMenuWidget) ---
 
@@ -250,6 +255,30 @@ void UAudioSettingsSubsystem::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 	if (!LoadedWorld)
 	{
 		return;
+	}
+
+	// First-time user: apply default graphics so the window starts at shipped defaults
+	// (1920x1080, Medium, Windowed) before the user ever opens the Settings menu
+	bool bSettingsInitialized = false;
+	GConfig->GetBool(*GraphicsConfigSection, *SettingsInitializedKey, bSettingsInitialized, GGameUserSettingsIni);
+	if (!bSettingsInitialized && GEngine)
+	{
+		UGameUserSettings* Settings = GEngine->GetGameUserSettings();
+		if (Settings)
+		{
+			Settings->SetOverallScalabilityLevel(1);  // Medium
+			Settings->SetScreenResolution(FIntPoint(1920, 1080));
+			Settings->SetFullscreenMode(EWindowMode::Windowed);
+			if (GEngine->GameViewport)
+			{
+				GEngine->Exec(LoadedWorld, TEXT("r.SetRes 1920x1080w"));
+			}
+			Settings->ApplySettings(false);
+			Settings->SaveSettings();
+			GConfig->SetBool(*GraphicsConfigSection, *SettingsInitializedKey, true, GGameUserSettingsIni);
+			GConfig->Flush(false, GGameUserSettingsIni);
+			UE_LOG(LogStateRunner_Arcade, Log, TEXT("AudioSettingsSubsystem: First-time defaults applied - 1920x1080, Medium, Windowed"));
+		}
 	}
 
 	UE_LOG(LogStateRunner_Arcade, Log, TEXT("AudioSettingsSubsystem: Level loaded (%s) - reapplying audio settings"),

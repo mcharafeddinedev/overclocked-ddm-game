@@ -491,7 +491,7 @@ void USettingsMenuWidget::LoadSettings()
 	// Load audio settings from config
 	// Default volumes for first-time users (before any settings are saved)
 	// MUST match AudioSettingsSubsystem defaults!
-	float MasterVol = 0.75f;  // 75%
+	float MasterVol = 0.85f;  // 85%
 	float MusicVol = 0.5f;    // 50%
 	float SFXVol = 1.0f;      // 100%
 
@@ -528,15 +528,15 @@ void USettingsMenuWidget::LoadSettings()
 	{
 		if (!bSettingsInitialized)
 		{
-			// First-time user: Apply arcade cabinet defaults
-			// Quality: Low (index 0)
+			// First-time user: Apply shipped package defaults
+			// Quality: Medium (index 1)
 			// Resolution: 1920x1080 (index 2 in AvailableResolutions)
-			// Fullscreen: WindowedFullscreen (index 1)
+			// Fullscreen: Windowed (index 2)
 			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: First-time user detected - applying default settings"));
 			
-			CurrentQualityPresetIndex = 0;  // Low
+			CurrentQualityPresetIndex = 1;  // Medium
 			CurrentResolutionIndex = 2;     // 1920x1080
-			CurrentFullscreenIndex = 1;     // WindowedFullscreen
+			CurrentFullscreenIndex = 2;     // Windowed
 			
 			// Apply these defaults
 			Settings->SetOverallScalabilityLevel(CurrentQualityPresetIndex);
@@ -544,7 +544,7 @@ void USettingsMenuWidget::LoadSettings()
 			{
 				Settings->SetScreenResolution(AvailableResolutions[CurrentResolutionIndex]);
 			}
-			Settings->SetFullscreenMode(EWindowMode::WindowedFullscreen);
+			Settings->SetFullscreenMode(EWindowMode::Windowed);
 			Settings->ApplySettings(false);
 			Settings->SaveSettings();
 			
@@ -552,7 +552,7 @@ void USettingsMenuWidget::LoadSettings()
 			GConfig->SetBool(*GraphicsConfigSection, *SettingsInitializedKey, true, GGameUserSettingsIni);
 			GConfig->Flush(false, GGameUserSettingsIni);
 			
-			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: Default settings applied - Quality: Low, Resolution: 1920x1080, WindowedFullscreen"));
+			UE_LOG(LogStateRunner_Arcade, Log, TEXT("SettingsMenuWidget: Default settings applied - Quality: Medium, Resolution: 1920x1080, Windowed"));
 		}
 		else
 		{

@@ -37,9 +37,9 @@ public:
 	static const FString MusicVolumeKey;
 	static const FString SFXVolumeKey;
 
-	// --- Default Volumes (for first-time users) ---
+	// --- Default Volumes (for first-time users / shipped package) ---
 
-	static constexpr float DefaultMasterVolume = 0.75f;   // 75%
+	static constexpr float DefaultMasterVolume = 0.85f;   // 85%
 	static constexpr float DefaultMusicVolume = 0.5f;    // 50%
 	static constexpr float DefaultSFXVolume = 1.0f;      // 100%
 
