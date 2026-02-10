@@ -1,0 +1,23 @@
+# Unreal Engine 5
+Binaries/
+Build/
+Intermediate/
+Saved/
+DerivedDataCache/
+Content/**/__ExternalActors__/
+
+# User-specific configs (do not commit)
+Config/DefaultGameUserSettings.ini
+Config/DefaultEditorPerProjectUserSettings.ini
+
+# IDEs
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.opensdf
+
+# OS
+Thumbs.dbf
