@@ -531,7 +531,13 @@ void ABasePickup::SetupCollisionBox()
 		return;
 	}
 
-	// Only set extent -- Blueprint-configured position is preserved
+	// Set extent and apply Z offset for collision positioning
 	CollisionBox->SetBoxExtent(CollisionExtent);
 	CollisionBox->SetWorldScale3D(FVector::OneVector);
+	
+	// Apply CollisionZOffset to raise/lower the collision box relative to the actor
+	if (!FMath::IsNearlyZero(CollisionZOffset))
+	{
+		CollisionBox->SetRelativeLocation(FVector(0.0f, 0.0f, CollisionZOffset));
+	}
 }

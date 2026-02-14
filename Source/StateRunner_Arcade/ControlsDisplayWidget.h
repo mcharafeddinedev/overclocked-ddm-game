@@ -15,13 +15,14 @@ class UButton;
 
 /**
  * Enum for the different control input types that can be displayed.
+ * Order: Gamepad (default), Keyboard, Arcade
  */
 UENUM(BlueprintType)
 enum class EControlInputType : uint8
 {
-	Arcade		UMETA(DisplayName = "Arcade"),
+	Gamepad		UMETA(DisplayName = "Gamepad"),
 	Keyboard	UMETA(DisplayName = "Keyboard"),
-	Gamepad		UMETA(DisplayName = "Gamepad")
+	Arcade		UMETA(DisplayName = "Arcade")
 };
 
 //=============================================================================
@@ -151,7 +152,7 @@ protected:
 
 	/** Current control type being displayed */
 	UPROPERTY(BlueprintReadOnly, Category="State")
-	EControlInputType CurrentControlType = EControlInputType::Arcade;
+	EControlInputType CurrentControlType = EControlInputType::Gamepad;
 
 	/** Current control type index (for cycling) */
 	UPROPERTY(BlueprintReadOnly, Category="State")

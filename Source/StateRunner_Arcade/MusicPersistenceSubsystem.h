@@ -84,6 +84,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Music")
 	bool HasMusicStarted() const { return bMusicHasStarted; }
 
+	/**
+	 * Ensure music is playing. Call after level transitions to restart music if needed.
+	 * Safe to call at any time - will only start playback if not already playing.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Music")
+	void EnsureMusicPlaying();
+
 	//=============================================================================
 	// TRACK CONFIGURATION
 	//=============================================================================
@@ -133,7 +140,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<USoundClass> MusicSoundClass;
 
-	/** Array of music tracks to play */
+	/** Array of music tracks to play (loaded at runtime) */
 	UPROPERTY()
 	TArray<TObjectPtr<USoundBase>> MusicTracks;
 
@@ -151,6 +158,24 @@ protected:
 
 	/** Flag to ignore OnAudioFinished during volume adjustments */
 	bool bIgnoreAudioFinished = false;
+
+	/** Timer handle for fallback playback monitoring */
+	FTimerHandle PlaybackMonitorHandle;
+
+	/** Flag to track if we're in the process of transitioning tracks */
+	bool bTransitioningTracks = false;
+
+	/** Timestamp of last restart attempt to prevent rapid-fire restarts */
+	double LastRestartAttemptTime = 0.0;
+	
+	/** Minimum time between restart attempts (seconds) */
+	static constexpr double MinRestartInterval = 1.0;
+
+	/** Timestamp when current track started playing */
+	double CurrentTrackStartTime = 0.0;
+	
+	/** Minimum playback time before OnAudioFinished is considered valid (seconds) */
+	static constexpr double MinPlaybackTimeBeforeFinish = 5.0;
 
 public:
 	/** Call this before adjusting volume to prevent false track-skip triggers */
@@ -173,4 +198,13 @@ protected:
 
 	/** Load default tracks from asset paths */
 	void LoadDefaultTracks();
+
+	/** Fallback monitor that checks if playback has stopped unexpectedly */
+	void CheckPlaybackStatus();
+
+	/** Start the playback monitor timer */
+	void StartPlaybackMonitor();
+
+	/** Stop the playback monitor timer */
+	void StopPlaybackMonitor();
 };

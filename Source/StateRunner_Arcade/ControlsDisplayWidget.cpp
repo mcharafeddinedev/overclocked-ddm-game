@@ -8,8 +8,8 @@
 UControlsDisplayWidget::UControlsDisplayWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// Default focus on control type selector
-	DefaultFocusIndex = INDEX_CONTROL_TYPE;
+	// Default focus on Back button (user can view controls, then press Enter to close)
+	DefaultFocusIndex = INDEX_BACK;
 
 	// Initialize control type names
 	InitializeControlTypeNames();
@@ -115,10 +115,11 @@ void UControlsDisplayWidget::NativeDestruct()
 
 void UControlsDisplayWidget::InitializeControlTypeNames()
 {
+	// Order must match EControlInputType enum: Gamepad, Keyboard, Arcade
 	ControlTypeNames.Empty();
-	ControlTypeNames.Add(TEXT("ARCADE"));
-	ControlTypeNames.Add(TEXT("KEYBOARD"));
 	ControlTypeNames.Add(TEXT("GAMEPAD"));
+	ControlTypeNames.Add(TEXT("KEYBOARD"));
+	ControlTypeNames.Add(TEXT("ARCADE"));
 }
 
 //=============================================================================

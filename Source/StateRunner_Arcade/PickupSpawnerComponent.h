@@ -370,9 +370,26 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="1-Up Config", meta=(ClampMin="3", ClampMax="20"))
 	int32 OneUpPoolSize = 8;
 
+	/**
+	 * Z offset for 1-Up spawns above PickupSpawnZ.
+	 * Lower values make 1-Ups collectible from ground level (running/sliding).
+	 * Default 35.0f ensures they're grabbable without jumping while still floating visibly.
+	 * NOTE: Was 60.0f which required jumping - reduced for better UX.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="1-Up Config", meta=(ClampMin="-50.0", ClampMax="100.0"))
+	float OneUpZOffset = 0.0f;
+
 	// --- EMP Configuration ---
 
 protected:
+
+	/**
+	 * Z offset for EMP spawns above PickupSpawnZ.
+	 * Higher values = player needs to jump to collect.
+	 * Default 100.0f makes EMPs require a jump (not collectible while sliding).
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="EMP Config", meta=(ClampMin="0.0", ClampMax="200.0"))
+	float EMPZOffset = 100.0f;
 
 	/** Chance to spawn an EMP per segment (0.0 to 1.0) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="EMP Config", meta=(ClampMin="0.0", ClampMax="0.2"))
@@ -410,6 +427,13 @@ protected:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pickup Config|Classes")
 	TSubclassOf<ABasePickup> MagnetClass;
+
+	/**
+	 * Z offset for Magnet spawns above PickupSpawnZ.
+	 * Default 0.0f means Magnets spawn at base height (collectible while sliding).
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Magnet Config", meta=(ClampMin="-50.0", ClampMax="100.0"))
+	float MagnetZOffset = 0.0f;
 
 	/**
 	 * Chance to spawn a Magnet per segment (0.0 to 1.0).
@@ -731,6 +755,14 @@ protected:
 
 	/** Get random lane */
 	ELane GetRandomLane() const;
+
+	/**
+	 * Get random side lane (Left or Right only, never Center).
+	 * Used for aerial patterns where center lane creates depth perception issues.
+	 * Players cannot see the "stair step" of aerial pickups when they're coming
+	 * straight at the centered camera.
+	 */
+	ELane GetRandomSideLane() const;
 
 	/** Check if should spawn 1-Up this segment */
 	bool ShouldSpawn1Up() const;

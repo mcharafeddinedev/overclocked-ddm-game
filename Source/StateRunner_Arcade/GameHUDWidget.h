@@ -16,6 +16,12 @@ class UObstacleSpawnerComponent;
 class UWorldScrollComponent;
 
 /**
+ * Delegate for when countdown sequence completes ("GO!!" finished displaying).
+ * Use this in Blueprint to trigger post-countdown effects like background color transitions.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCountdownFinished);
+
+/**
  * Main gameplay HUD - shows score, lives, OVERCLOCK meter, and tutorial prompts.
  * Auto-binds to GameMode components on construct and updates via events.
  */
@@ -457,6 +463,13 @@ public:
 	void HideCountdownText();
 
 	/**
+	 * Call this when "GO!!" finishes to broadcast OnCountdownFinished.
+	 * Use this to trigger post-countdown effects like background color transitions.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Countdown")
+	void NotifyCountdownFinished();
+
+	/**
 	 * Updates score display (normally called via event binding).
 	 */
 	UFUNCTION(BlueprintCallable, Category="Display")
@@ -516,6 +529,24 @@ public:
 	/** Called when invulnerability ends */
 	UFUNCTION(BlueprintImplementableEvent, Category="Events")
 	void OnInvulnerabilityEnded();
+
+	/**
+	 * Called when the countdown finishes ("GO!!" completed).
+	 * Implement in Blueprint to handle post-countdown effects like background color changes.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Events")
+	void OnCountdownComplete();
+
+	// --- Event Dispatchers (BlueprintAssignable) ---
+
+public:
+
+	/**
+	 * Broadcast when the countdown sequence finishes ("GO!!" has completed).
+	 * Bind to this in Blueprint to trigger post-countdown effects like background color transitions.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FOnCountdownFinished OnCountdownFinished;
 
 	// --- Event Handlers ---
 

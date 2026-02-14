@@ -114,18 +114,36 @@ void UGameHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 
 	// Update difficulty display when level changes
-	if (ObstacleSpawner && DifficultyText)
+	if (DifficultyText)
 	{
-		int32 CurrentDifficulty = ObstacleSpawner->GetCurrentDifficultyLevel();
-		if (CurrentDifficulty != CachedDifficultyLevel)
+		// Check if we've hit max BASE speed (3500 units/sec, excluding overclock multiplier)
+		const float MaxSpeedThreshold = 3500.0f;
+		bool bAtMaxSpeed = false;
+		
+		if (WorldScroll)
 		{
-			CachedDifficultyLevel = CurrentDifficulty;
-			if (CurrentDifficulty >= MaxDifficultyDisplay)
+			// Calculate base speed by dividing out the overclock multiplier
+			float CurrentSpeed = WorldScroll->GetCurrentScrollSpeed();
+			float OverclockMultiplier = WorldScroll->GetOverclockMultiplier();
+			float BaseSpeed = (OverclockMultiplier > 0.0f) ? (CurrentSpeed / OverclockMultiplier) : CurrentSpeed;
+			bAtMaxSpeed = BaseSpeed >= MaxSpeedThreshold;
+		}
+		
+		if (bAtMaxSpeed)
+		{
+			// Only update if not already showing MAX SPEED
+			if (CachedDifficultyLevel != -999) // Use -999 as sentinel for "MAX SPEED" state
 			{
-				DifficultyText->SetText(FText::FromString(TEXT("MAX DIFFICULTY")));
+				CachedDifficultyLevel = -999;
+				DifficultyText->SetText(FText::FromString(TEXT("MAX SPEED")));
 			}
-			else
+		}
+		else if (ObstacleSpawner)
+		{
+			int32 CurrentDifficulty = ObstacleSpawner->GetCurrentDifficultyLevel();
+			if (CurrentDifficulty != CachedDifficultyLevel)
 			{
+				CachedDifficultyLevel = CurrentDifficulty;
 				DifficultyText->SetText(FText::FromString(FString::Printf(TEXT("Difficulty %d"), CurrentDifficulty)));
 			}
 		}
@@ -327,6 +345,12 @@ void UGameHUDWidget::ShowTutorialPrompt(const FString& PromptText, float Duratio
 	if (TutorialBackground)
 	{
 		TutorialBackground->SetVisibility(ESlateVisibility::Visible);
+		
+		// Tutorial prompts (SWITCH LANES, JUMP, SLIDE, OVERCLOCK) use green background
+		if (UImage* BackgroundImage = Cast<UImage>(TutorialBackground))
+		{
+			BackgroundImage->SetColorAndOpacity(FLinearColor(0.0f, 1.0f, 0.5f, 1.0f)); // Green
+		}
 	}
 
 	// Start grow-in animation
@@ -411,6 +435,19 @@ void UGameHUDWidget::ShowCountdownText(const FString& CountdownText, float Durat
 	if (TutorialBackground)
 	{
 		TutorialBackground->SetVisibility(ESlateVisibility::Visible);
+		
+		// Set green color for "GO" countdown to indicate game starting
+		if (UImage* BackgroundImage = Cast<UImage>(TutorialBackground))
+		{
+			if (CountdownText.Contains(TEXT("GO")))
+			{
+				BackgroundImage->SetColorAndOpacity(FLinearColor(0.0f, 1.0f, 0.5f, 1.0f)); // Green
+			}
+			else
+			{
+				BackgroundImage->SetColorAndOpacity(FLinearColor(1.0f, 0.5f, 0.0f, 1.0f)); // Orange for countdown numbers
+			}
+		}
 	}
 
 	// Start grow-in animation
@@ -431,6 +468,17 @@ void UGameHUDWidget::HideCountdownText()
 {
 	// Same as HideTutorialPrompt - they share the same widget
 	HideTutorialPrompt();
+}
+
+void UGameHUDWidget::NotifyCountdownFinished()
+{
+	// Call the Blueprint implementable event for post-countdown effects
+	OnCountdownComplete();
+	
+	// Also broadcast the delegate for any external listeners
+	OnCountdownFinished.Broadcast();
+	
+	UE_LOG(LogStateRunner_Arcade, Log, TEXT("GameHUDWidget: Countdown finished"));
 }
 
 void UGameHUDWidget::UpdateScoreDisplay(int32 Score)

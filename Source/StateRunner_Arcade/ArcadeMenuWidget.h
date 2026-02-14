@@ -450,9 +450,10 @@ public:
 	/**
 	 * Transfer focus back to the menu zone.
 	 * Does nothing if music player doesn't have focus.
+	 * Virtual so child classes can customize return behavior.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Music Player")
-	void FocusMenu();
+	virtual void FocusMenu();
 
 	// --- Blueprint Overridable Functions ---
 

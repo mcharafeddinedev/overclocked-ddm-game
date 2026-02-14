@@ -533,7 +533,7 @@ void UPickupSpawnerComponent::Spawn1Up(float SegmentStartX, float SegmentEndX, b
 		// 20% into segment so the player sees it coming
 		float GuaranteedX = SegmentStartX + (0.20f * SegmentLength);
 		float WorldY = GetLaneYPosition(ELane::Center);
-		float WorldZ = PickupSpawnZ + 60.0f; // 1-Ups are larger than data packets
+		float WorldZ = PickupSpawnZ + OneUpZOffset;
 		
 		FVector GuaranteedLocation(GuaranteedX, WorldY, WorldZ);
 		
@@ -590,7 +590,7 @@ void UPickupSpawnerComponent::Spawn1Up(float SegmentStartX, float SegmentEndX, b
 				
 				float WorldX = SegmentStartX + (RelativeX * SegmentLength);
 				float WorldY = GetLaneYPosition(TryLane);
-				float WorldZ = PickupSpawnZ + 60.0f;
+				float WorldZ = PickupSpawnZ + OneUpZOffset;
 
 				FVector DesiredLocation(WorldX, WorldY, WorldZ);
 				
@@ -610,7 +610,7 @@ void UPickupSpawnerComponent::Spawn1Up(float SegmentStartX, float SegmentEndX, b
 				if (bFoundSafeSpot) break;
 				
 				float EdgeX = SegmentStartX + (FMath::RandBool() ? 0.15f : 0.85f) * SegmentLength;
-				FVector EdgeLocation(EdgeX, GetLaneYPosition(EdgeLane), PickupSpawnZ + 60.0f);
+				FVector EdgeLocation(EdgeX, GetLaneYPosition(EdgeLane), PickupSpawnZ + OneUpZOffset);
 				
 				if (FindSafeSpawnPosition(EdgeLocation, EdgeLane, SafeLocation))
 				{
@@ -767,7 +767,7 @@ void UPickupSpawnerComponent::SpawnEMP(float SegmentStartX, float SegmentEndX, i
 			{
 				float WorldX = FMath::FRandRange(SpawnMinX, SpawnMaxX);
 				float WorldY = GetLaneYPosition(TryLane);
-				float WorldZ = PickupSpawnZ + 80.0f; // EMPs are larger than data packets
+				float WorldZ = PickupSpawnZ + EMPZOffset; // Configurable - higher = requires jump
 
 				FVector DesiredLocation(WorldX, WorldY, WorldZ);
 				
@@ -793,7 +793,7 @@ void UPickupSpawnerComponent::SpawnEMP(float SegmentStartX, float SegmentEndX, i
 				
 				float WorldX = SegmentStartX + (RelativeX * SegmentLength);
 				float WorldY = GetLaneYPosition(TryLane);
-				float WorldZ = PickupSpawnZ + 80.0f;
+				float WorldZ = PickupSpawnZ + EMPZOffset;
 
 				FVector DesiredLocation(WorldX, WorldY, WorldZ);
 				
@@ -811,7 +811,7 @@ void UPickupSpawnerComponent::SpawnEMP(float SegmentStartX, float SegmentEndX, i
 	{
 		ELane RandomLane = LanePriority[0];
 		float RandomX = SegmentStartX + (FMath::FRandRange(0.3f, 0.7f) * SegmentLength);
-		SafeLocation = FVector(RandomX, GetLaneYPosition(RandomLane), PickupSpawnZ + 80.0f);
+		SafeLocation = FVector(RandomX, GetLaneYPosition(RandomLane), PickupSpawnZ + EMPZOffset);
 		bFoundSafeSpot = true;
 		FinalLane = RandomLane;
 		UE_LOG(LogStateRunner_Arcade, Warning, TEXT("EMP: Forced spawn at random position despite obstacles"));
@@ -897,7 +897,7 @@ void UPickupSpawnerComponent::SpawnMagnet(float SegmentStartX, float SegmentEndX
 			float RelativeX = FMath::FRandRange(0.2f, 0.8f);
 			float WorldX = SegmentStartX + (RelativeX * SegmentLength);
 			float WorldY = GetLaneYPosition(TryLane);
-			float WorldZ = PickupSpawnZ;
+			float WorldZ = PickupSpawnZ + MagnetZOffset;
 
 			FVector DesiredLocation(WorldX, WorldY, WorldZ);
 			
@@ -914,7 +914,7 @@ void UPickupSpawnerComponent::SpawnMagnet(float SegmentStartX, float SegmentEndX
 	{
 		ELane RandomLane = Lanes[0];
 		float RandomX = SegmentStartX + (FMath::FRandRange(0.3f, 0.7f) * SegmentLength);
-		SafeLocation = FVector(RandomX, GetLaneYPosition(RandomLane), PickupSpawnZ);
+		SafeLocation = FVector(RandomX, GetLaneYPosition(RandomLane), PickupSpawnZ + MagnetZOffset);
 		bFoundSafeSpot = true;
 		FinalLane = RandomLane;
 		UE_LOG(LogStateRunner_Arcade, Warning, TEXT("Magnet: Forced spawn at random position despite obstacles"));
@@ -1150,6 +1150,16 @@ ELane UPickupSpawnerComponent::GetRandomLane() const
 	}
 }
 
+ELane UPickupSpawnerComponent::GetRandomSideLane() const
+{
+	// Returns only Left or Right lane, never Center.
+	// Used for aerial patterns because center lane pickups have depth perception issues:
+	// Players cannot see the "stair step" of ascending/descending aerial patterns
+	// when they're coming straight at the centered camera perspective.
+	// Left and right lanes show visible vertical offset differences.
+	return FMath::RandBool() ? ELane::Left : ELane::Right;
+}
+
 // --- Obstacle Avoidance ---
 
 void UPickupSpawnerComponent::CacheObstaclePositions(float SegmentStartX, float SegmentEndX)
@@ -1344,16 +1354,19 @@ void UPickupSpawnerComponent::GeneratePatternPickups(TArray<FPickupSpawnData>& O
 			break;
 		
 		// --- Aerial Patterns ---
+		// NOTE: Aerial patterns use GetRandomSideLane() (Left/Right only, never Center)
+		// because center lane aerial pickups have depth perception issues - players can't
+		// see the "stair step" height changes when pickups come straight at the camera.
 		case EPickupPatternType::VerticalArc:
-			GenerateVerticalArcPattern(OutPickups, PickupCount, GetRandomLane());
+			GenerateVerticalArcPattern(OutPickups, PickupCount, GetRandomSideLane());
 			break;
 			
 		case EPickupPatternType::Ascending:
-			GenerateAscendingPattern(OutPickups, PickupCount, GetRandomLane());
+			GenerateAscendingPattern(OutPickups, PickupCount, GetRandomSideLane());
 			break;
 			
 		case EPickupPatternType::Descending:
-			GenerateDescendingPattern(OutPickups, PickupCount, GetRandomLane());
+			GenerateDescendingPattern(OutPickups, PickupCount, GetRandomSideLane());
 			break;
 			
 		case EPickupPatternType::Helix:
@@ -1361,7 +1374,7 @@ void UPickupSpawnerComponent::GeneratePatternPickups(TArray<FPickupSpawnData>& O
 			break;
 			
 		case EPickupPatternType::JumpArc:
-			GenerateJumpArcPattern(OutPickups, PickupCount, GetRandomLane(), FMath::RandBool());
+			GenerateJumpArcPattern(OutPickups, PickupCount, GetRandomSideLane(), FMath::RandBool());
 			break;
 			
 		case EPickupPatternType::Staircase:
@@ -1369,11 +1382,11 @@ void UPickupSpawnerComponent::GeneratePatternPickups(TArray<FPickupSpawnData>& O
 			break;
 			
 		case EPickupPatternType::SkyTrail:
-			GenerateSkyTrailPattern(OutPickups, PickupCount, GetRandomLane());
+			GenerateSkyTrailPattern(OutPickups, PickupCount, GetRandomSideLane());
 			break;
 			
 		case EPickupPatternType::Tower:
-			GenerateTowerPattern(OutPickups, FMath::FRandRange(0.3f, 0.7f), GetRandomLane());
+			GenerateTowerPattern(OutPickups, FMath::FRandRange(0.3f, 0.7f), GetRandomSideLane());
 			break;
 			
 		case EPickupPatternType::Rainbow:
@@ -1764,13 +1777,16 @@ void UPickupSpawnerComponent::GenerateDescendingPattern(TArray<FPickupSpawnData>
 void UPickupSpawnerComponent::GenerateHelixPattern(TArray<FPickupSpawnData>& OutPickups, int32 Count)
 {
 	// 3D corkscrew: zigzag lanes + height oscillation
+	// NOTE: Uses only Left and Right lanes (no Center) to avoid depth perception issues
+	// where players can't see height changes in pickups coming straight at the camera.
 	OutPickups.Reserve(Count);
 	
 	float StartX, EndX;
 	GetAerialPatternBounds(StartX, EndX);
 	float Spacing = (EndX - StartX) / FMath::Max(1, Count - 1);
 	
-	const ELane LaneSequence[] = { ELane::Left, ELane::Center, ELane::Right, ELane::Center };
+	// Alternates between Left and Right lanes only - Center excluded for depth perception
+	const ELane LaneSequence[] = { ELane::Left, ELane::Right };
 	const EPickupHeight HeightSequence[] = { 
 		EPickupHeight::Ground, 
 		EPickupHeight::LowAir, 
@@ -1783,7 +1799,7 @@ void UPickupSpawnerComponent::GenerateHelixPattern(TArray<FPickupSpawnData>& Out
 	for (int32 i = 0; i < Count; i++)
 	{
 		FPickupSpawnData Data;
-		Data.Lane = LaneSequence[i % 4];
+		Data.Lane = LaneSequence[i % 2];
 		Data.RelativeXOffset = StartX + (i * Spacing);
 		Data.HeightLevel = HeightSequence[i % 6];
 		
@@ -1821,14 +1837,16 @@ void UPickupSpawnerComponent::GenerateJumpArcPattern(TArray<FPickupSpawnData>& O
 void UPickupSpawnerComponent::GenerateStaircasePattern(TArray<FPickupSpawnData>& OutPickups, int32 Count, bool bLeftToRight)
 {
 	// Ascending diagonally across lanes, each step changes lane + height
+	// NOTE: Only uses Left and Right lanes (no Center) to avoid depth perception issues.
 	OutPickups.Reserve(Count);
 	
 	float StartX, EndX;
 	GetAerialPatternBounds(StartX, EndX);
 	float Spacing = (EndX - StartX) / FMath::Max(1, Count - 1);
 	
-	const ELane LanesLR[] = { ELane::Left, ELane::Center, ELane::Right };
-	const ELane LanesRL[] = { ELane::Right, ELane::Center, ELane::Left };
+	// Only alternate between Left and Right - Center excluded for depth perception
+	const ELane LanesLR[] = { ELane::Left, ELane::Right };
+	const ELane LanesRL[] = { ELane::Right, ELane::Left };
 	const ELane* Lanes = bLeftToRight ? LanesLR : LanesRL;
 	
 	const EPickupHeight Heights[] = {
@@ -1842,7 +1860,7 @@ void UPickupSpawnerComponent::GenerateStaircasePattern(TArray<FPickupSpawnData>&
 	for (int32 i = 0; i < Count; i++)
 	{
 		FPickupSpawnData Data;
-		Data.Lane = Lanes[i % 3];
+		Data.Lane = Lanes[i % 2];
 		Data.RelativeXOffset = StartX + (i * Spacing);
 		
 		int32 HeightIndex = FMath::Min(i, 4);
@@ -1901,6 +1919,8 @@ void UPickupSpawnerComponent::GenerateTowerPattern(TArray<FPickupSpawnData>& Out
 void UPickupSpawnerComponent::GenerateRainbowPattern(TArray<FPickupSpawnData>& OutPickups, int32 Count, bool bLeftToRight)
 {
 	// 3D arc across lanes AND height
+	// NOTE: Only uses Left and Right lanes (no Center) to avoid depth perception issues.
+	// The arc goes L→R or R→L with height peaking in the middle of the X traverse.
 	OutPickups.Reserve(Count);
 	
 	float StartX, EndX;
@@ -1915,19 +1935,17 @@ void UPickupSpawnerComponent::GenerateRainbowPattern(TArray<FPickupSpawnData>& O
 		float t = (float)i / FMath::Max(1, Count - 1);
 		float ParabolicValue = 4.0f * t * (1.0f - t);
 		
-		int32 LaneIndex = FMath::RoundToInt(ParabolicValue * 2.0f);
-		if (!bLeftToRight)
+		// Only use Left and Right lanes - transition at midpoint
+		if (bLeftToRight)
 		{
-			LaneIndex = 2 - LaneIndex;
+			Data.Lane = (t < 0.5f) ? ELane::Left : ELane::Right;
+		}
+		else
+		{
+			Data.Lane = (t < 0.5f) ? ELane::Right : ELane::Left;
 		}
 		
-		switch (LaneIndex)
-		{
-			case 0: Data.Lane = ELane::Left; break;
-			case 1: Data.Lane = ELane::Center; break;
-			default: Data.Lane = ELane::Right; break;
-		}
-		
+		// Height follows parabolic arc
 		if (ParabolicValue < 0.25f)
 			Data.HeightLevel = EPickupHeight::LowAir;
 		else if (ParabolicValue < 0.5f)
@@ -1944,10 +1962,11 @@ void UPickupSpawnerComponent::GenerateRainbowPattern(TArray<FPickupSpawnData>& O
 void UPickupSpawnerComponent::GenerateBouncingArcsPattern(TArray<FPickupSpawnData>& OutPickups, int32 NumBounds)
 {
 	// Alternating L->R and R->L aerial arcs, creates a bouncing ball effect
-	// Each bound = 3 pickups across all lanes at jump arc heights
+	// NOTE: Only uses Left and Right lanes (no Center) to avoid depth perception issues.
+	// Each bound = 2 pickups (L/R or R/L) at jump arc heights
 	
 	NumBounds = FMath::Max(2, NumBounds);
-	int32 TotalPickups = NumBounds * 3;
+	int32 TotalPickups = NumBounds * 2;
 	OutPickups.Reserve(TotalPickups);
 	
 	float StartX, EndX;
@@ -1955,13 +1974,12 @@ void UPickupSpawnerComponent::GenerateBouncingArcsPattern(TArray<FPickupSpawnDat
 	
 	float TotalRange = EndX - StartX;
 	float BoundWidth = TotalRange / NumBounds;
-	float PickupSpacing = BoundWidth / 3.0f;
+	float PickupSpacing = BoundWidth / 2.0f;
 	
-	// Low -> High -> Low per bound
+	// Low -> High per bound (apex reached at lane transition)
 	const EPickupHeight ArcHeights[] = {
 		EPickupHeight::LowAir,
-		EPickupHeight::HighAir,
-		EPickupHeight::LowAir
+		EPickupHeight::HighAir
 	};
 	
 	float CurrentX = StartX;
@@ -1969,21 +1987,19 @@ void UPickupSpawnerComponent::GenerateBouncingArcsPattern(TArray<FPickupSpawnDat
 	
 	for (int32 Bound = 0; Bound < NumBounds; Bound++)
 	{
-		ELane Lanes[3];
+		ELane Lanes[2];
 		if (bLeftToRight)
 		{
 			Lanes[0] = ELane::Left;
-			Lanes[1] = ELane::Center;
-			Lanes[2] = ELane::Right;
+			Lanes[1] = ELane::Right;
 		}
 		else
 		{
 			Lanes[0] = ELane::Right;
-			Lanes[1] = ELane::Center;
-			Lanes[2] = ELane::Left;
+			Lanes[1] = ELane::Left;
 		}
 		
-		for (int32 i = 0; i < 3; i++)
+		for (int32 i = 0; i < 2; i++)
 		{
 			FPickupSpawnData Data;
 			Data.Lane = Lanes[i];
@@ -2473,9 +2489,18 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 	}
 
 	float SpawnX = SegmentStartX + DebugPickupRowOffset;
-	float SpawnZ = PickupSpawnZ;
+	// Calculate Z positions for each pickup type using their configured offsets
+	// Each pickup has ONE offset property that controls its height in both showcase and gameplay
+	float EMPSpawnZ = PickupSpawnZ + EMPZOffset;        // Default 100 - requires jump
+	float MagnetSpawnZ = PickupSpawnZ + MagnetZOffset;  // Default 0 - collectible while sliding
+	float OneUpSpawnZ = PickupSpawnZ + OneUpZOffset;    // Default -20 - collectible while sliding
+	
+	UE_LOG(LogStateRunner_Arcade, Warning, TEXT("Pickup Showcase Z Calc: PickupSpawnZ=%.1f, EMPZOffset=%.1f, MagnetZOffset=%.1f, OneUpZOffset=%.1f"),
+		PickupSpawnZ, EMPZOffset, MagnetZOffset, OneUpZOffset);
+	UE_LOG(LogStateRunner_Arcade, Warning, TEXT("Pickup Showcase Z Results: EMP=%.1f, Magnet=%.1f, 1-Up=%.1f"),
+		EMPSpawnZ, MagnetSpawnZ, OneUpSpawnZ);
 
-	// Spawn EMP in left lane
+	// Spawn EMP in left lane (higher position - not collectible while sliding)
 	// Activate immediately so the next pool request doesn't return the same actor
 	ABasePickup* EMP = GetPickupFromPool(EPickupType::EMP);
 	if (!EMP)
@@ -2484,7 +2509,7 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 		return false;
 	}
 	
-	FVector EMPPos(SpawnX, GetLaneYPosition(ELane::Left), SpawnZ);
+	FVector EMPPos(SpawnX, GetLaneYPosition(ELane::Left), EMPSpawnZ);
 	EMP->Activate(EMPPos, ELane::Left);
 	ActivePickups.Add(EMP);
 	UE_LOG(LogStateRunner_Arcade, Log, TEXT("Pickup Showcase: EMP LEFT spawned at (%.0f, %.0f, %.0f)"), 
@@ -2496,7 +2521,7 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 		ABasePickup* MagnetPickup = GetPickupFromPool(EPickupType::Magnet);
 		if (MagnetPickup)
 		{
-			FVector MagnetPos(SpawnX, GetLaneYPosition(ELane::Center), SpawnZ);
+			FVector MagnetPos(SpawnX, GetLaneYPosition(ELane::Center), MagnetSpawnZ);
 			MagnetPickup->Activate(MagnetPos, ELane::Center);
 			ActivePickups.Add(MagnetPickup);
 			UE_LOG(LogStateRunner_Arcade, Log, TEXT("Pickup Showcase: Magnet CENTER spawned at (%.0f, %.0f, %.0f)"), 
@@ -2515,7 +2540,7 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 		ABasePickup* OneUpCenter = GetPickupFromPool(EPickupType::OneUp);
 		if (OneUpCenter)
 		{
-			FVector OneUpCenterPos(SpawnX, GetLaneYPosition(ELane::Center), SpawnZ);
+			FVector OneUpCenterPos(SpawnX, GetLaneYPosition(ELane::Center), OneUpSpawnZ);
 			OneUpCenter->Activate(OneUpCenterPos, ELane::Center);
 			ActivePickups.Add(OneUpCenter);
 			UE_LOG(LogStateRunner_Arcade, Log, TEXT("Pickup Showcase: 1-Up CENTER (fallback) spawned at (%.0f, %.0f, %.0f)"), 
@@ -2523,7 +2548,7 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 		}
 	}
 
-	// Spawn 1-Up in right lane
+	// Spawn 1-Up in right lane (same height as Magnet - collectible while sliding)
 	ABasePickup* OneUpRight = GetPickupFromPool(EPickupType::OneUp);
 	if (!OneUpRight)
 	{
@@ -2532,7 +2557,7 @@ bool UPickupSpawnerComponent::TrySpawnDebugPickupRow(float SegmentStartX, float 
 		return false;
 	}
 	
-	FVector OneUpRightPos(SpawnX, GetLaneYPosition(ELane::Right), SpawnZ);
+	FVector OneUpRightPos(SpawnX, GetLaneYPosition(ELane::Right), OneUpSpawnZ);
 	OneUpRight->Activate(OneUpRightPos, ELane::Right);
 	ActivePickups.Add(OneUpRight);
 	UE_LOG(LogStateRunner_Arcade, Log, TEXT("Pickup Showcase: 1-Up RIGHT spawned at (%.0f, %.0f, %.0f)"), 

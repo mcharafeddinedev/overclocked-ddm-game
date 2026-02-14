@@ -323,6 +323,12 @@ void AStateRunner_ArcadeCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 
 void AStateRunner_ArcadeCharacter::SwitchLaneLeft()
 {
+	// Block input during intro/countdown
+	if (!bGameplayInputEnabled)
+	{
+		return;
+	}
+
 	// Cannot switch if already at leftmost lane
 	if (CurrentLane == ELanePosition::Left)
 	{
@@ -364,6 +370,12 @@ void AStateRunner_ArcadeCharacter::SwitchLaneLeft()
 
 void AStateRunner_ArcadeCharacter::SwitchLaneRight()
 {
+	// Block input during intro/countdown
+	if (!bGameplayInputEnabled)
+	{
+		return;
+	}
+
 	// Cannot switch if already at rightmost lane
 	if (CurrentLane == ELanePosition::Right)
 	{
@@ -585,6 +597,12 @@ void AStateRunner_ArcadeCharacter::OnLaneRightReleased()
 
 void AStateRunner_ArcadeCharacter::StartJump()
 {
+	// Block input during intro/countdown
+	if (!bGameplayInputEnabled)
+	{
+		return;
+	}
+
 	// Cannot jump if already jumping
 	if (bIsJumping)
 	{
@@ -775,6 +793,12 @@ void AStateRunner_ArcadeCharacter::OnJumpReleased()
 
 void AStateRunner_ArcadeCharacter::StartSlide()
 {
+	// Block input during intro/countdown
+	if (!bGameplayInputEnabled)
+	{
+		return;
+	}
+
 	// Cannot slide if already sliding
 	if (bIsSliding)
 	{
@@ -1066,6 +1090,12 @@ bool AStateRunner_ArcadeCharacter::IsAnyMovementActive() const
 
 void AStateRunner_ArcadeCharacter::OnOverclockPressed()
 {
+	// Block input during intro/countdown
+	if (!bGameplayInputEnabled)
+	{
+		return;
+	}
+
 	// Get OVERCLOCK system from GameMode
 	if (UWorld* World = GetWorld())
 	{
@@ -1170,6 +1200,26 @@ void AStateRunner_ArcadeCharacter::ProcessRiseEffect(float DeltaTime)
 		CurrentRiseOffset = 0.0f;
 		bIsRising = false;
 		UE_LOG(LogStateRunner_Arcade, Log, TEXT("Intro rise complete - Character at normal position"));
+	}
+}
+
+// --- Gameplay Input Control ---
+
+void AStateRunner_ArcadeCharacter::EnableGameplayInput()
+{
+	if (!bGameplayInputEnabled)
+	{
+		bGameplayInputEnabled = true;
+		UE_LOG(LogStateRunner_Arcade, Log, TEXT("Gameplay input ENABLED - Player can now move, jump, slide, etc."));
+	}
+}
+
+void AStateRunner_ArcadeCharacter::DisableGameplayInput()
+{
+	if (bGameplayInputEnabled)
+	{
+		bGameplayInputEnabled = false;
+		UE_LOG(LogStateRunner_Arcade, Log, TEXT("Gameplay input DISABLED - Player movement blocked"));
 	}
 }
 

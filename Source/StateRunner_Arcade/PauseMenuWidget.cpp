@@ -450,20 +450,19 @@ FReply UPauseMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 	//=========================================================================
 	// MAIN ZONE NAVIGATION
 	//=========================================================================
-	// Left: Go to left zone (from Settings or Quit)
+	// Left: Go to left zone (Theme button) - from any main menu button
 	if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left)
 	{
-		// Only allow left navigation from bottom buttons (Settings or Quit)
-		if (ThemeSelectorButton && (CurrentFocusIndex == INDEX_SETTINGS || CurrentFocusIndex == INDEX_QUIT_TO_MENU))
+		if (ThemeSelectorButton)
 		{
 			FocusLeftZone();
 		}
 		return FReply::Handled();
 	}
-	// Right: Go to right zone (music player) - from Resume or Settings
+	// Right: Go to right zone (music player) - from any main menu button
 	else if (Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right)
 	{
-		if (MusicPlayerWidget && (CurrentFocusIndex == INDEX_RESUME || CurrentFocusIndex == INDEX_SETTINGS))
+		if (MusicPlayerWidget)
 		{
 			FocusMusicPlayer();
 		}
@@ -483,4 +482,38 @@ void UPauseMenuWidget::OnBackAction_Implementation()
 {
 	// On Pause Menu, Escape resumes the game
 	ResumeGame();
+}
+
+void UPauseMenuWidget::FocusMenu()
+{
+	if (!bMusicPlayerHasFocus)
+	{
+		return;
+	}
+
+	UE_LOG(LogStateRunner_Arcade, Log, TEXT("PauseMenuWidget: Returning focus from music player to main zone"));
+
+	// Dim music player buttons
+	DimMusicPlayerButtons();
+
+	// Clear music player focus
+	bMusicPlayerHasFocus = false;
+
+	// Return to Settings button (above Quit) - mirrors FocusMainZoneFromLeft behavior
+	int32 OldFocusIndex = CurrentFocusIndex;
+	
+	if (SettingsButton)
+	{
+		CurrentFocusIndex = INDEX_SETTINGS;
+	}
+	else
+	{
+		CurrentFocusIndex = INDEX_RESUME;
+	}
+
+	// Restore menu focus visuals
+	UpdateFocusVisuals(CurrentFocusIndex, OldFocusIndex);
+
+	// Play navigation sound
+	PlayNavigationSound();
 }

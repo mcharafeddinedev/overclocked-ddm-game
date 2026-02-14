@@ -282,4 +282,7 @@ protected:
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual void OnItemSelected_Implementation(int32 ItemIndex) override;
 	virtual void OnBackAction_Implementation() override;
+	
+	/** Override to return to Settings button (above Quit) when leaving music player */
+	virtual void FocusMenu() override;
 };

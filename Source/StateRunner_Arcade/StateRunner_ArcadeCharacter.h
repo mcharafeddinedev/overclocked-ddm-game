@@ -532,6 +532,40 @@ protected:
 	/** Process the rise interpolation (called from Tick) */
 	void ProcessRiseEffect(float DeltaTime);
 
+	// --- Gameplay Input Control ---
+
+protected:
+
+	/**
+	 * Whether gameplay input is enabled.
+	 * When false, player cannot move, jump, slide, or use OVERCLOCK.
+	 * Used to disable input during intro rise/countdown and "How To Play" screen.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category="Gameplay Input")
+	bool bGameplayInputEnabled = false;
+
+public:
+
+	/**
+	 * Enable gameplay input - allows player to move, jump, slide, etc.
+	 * Call this from Level Blueprint after countdown completes ("GO!").
+	 */
+	UFUNCTION(BlueprintCallable, Category="Gameplay Input")
+	void EnableGameplayInput();
+
+	/**
+	 * Disable gameplay input - prevents player from moving, jumping, sliding, etc.
+	 * Called automatically during intro rise/countdown.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Gameplay Input")
+	void DisableGameplayInput();
+
+	/**
+	 * Check if gameplay input is currently enabled.
+	 */
+	UFUNCTION(BlueprintPure, Category="Gameplay Input")
+	bool IsGameplayInputEnabled() const { return bGameplayInputEnabled; }
+
 	// --- Camera Effects System ---
 
 protected:
